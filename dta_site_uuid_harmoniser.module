@@ -1,0 +1,95 @@
+<?php
+
+/**
+* @file
+* Contains dta_site_uuid_harmoniser.module.
+*/
+
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+* Implements hook_help().
+*/
+function dta_site_uuid_harmoniser_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Main module help for the dta_site_uuid_harmoniser module.
+    case 'help.page.dta_site_uuid_harmoniser':
+    $output = '';
+    $output .= '<h3>' . t('About') . '</h3>';
+    $output .= '<p>' . t('A small module to allow the harmonisation of site UUIDs post-install.') . '</p>';
+    $output .= '<p>' . t('Please note that it does not do anything beyond that.') . '</p>';
+    return $output;
+
+    default:
+  }
+}
+
+function dta_site_uuid_harmoniser_install() {
+  if (PHP_SAPI === 'cli' && function_exists('drush_main')) {
+    drush_log("Updating site UUID...", 'ok');
+  }
+
+  // Update the site UUID to match other sites.
+
+  // Make sure the proper environment exists. Otherwise, set a default UUID
+  // using Drupal's internal service.
+
+  if(isset($_ENV['VCAP_SERVICES'])) {
+    if (PHP_SAPI === 'cli' && function_exists('drush_main')) {
+      drush_log("Found the environment...", 'ok');
+    } else {
+      drupal_set_message("Found the environment...", 'status');
+    }
+
+    // Set site uuid.
+    $service_blob = json_decode($_ENV['VCAP_SERVICES'], true);
+    $uuid_service = array();
+    foreach($service_blob as $service_provider => $service_list) {
+      foreach ($service_list as $some_service) {
+        // look for a service where the name is 'uuid-harmonisation'
+        if ($some_service['name'] === 'uuid-harmonisation') {
+          $uuid_service[] = $some_service;
+          _set_uuid_from_environment($uuid_service);
+          break 2;
+        } else {
+          _set_default_uuid('service');
+        }
+      }
+    }
+  } else {
+    // Set a unique ID if the correct environment doesn't exist.
+    _set_default_uuid('environment');
+  }
+}
+
+function _set_default_uuid($state) {
+  // Set a UUID using Drupal's built-in service.
+
+  if (PHP_SAPI === 'cli' && function_exists('drush_main')) {
+    drush_log("Didn't find the $state, setting a default UUID.", 'warning');
+  } else {
+    drupal_set_message(t("Didn't find the @state, setting a default UUID", array('@state' => $state)), 'warning');
+  }
+
+  $uuid_service = \Drupal::service('uuid');
+
+  $uuid = $uuid_service->generate();
+  \Drupal::configFactory()
+    ->getEditable('system.site')
+    ->set('uuid', $uuid)
+    ->save(TRUE);
+}
+
+function _set_uuid_from_environment($uuid_service) {
+
+  \Drupal::configFactory()
+    ->getEditable('system.site')
+    ->set('uuid', $uuid_service[0]['credentials']['uuid'])
+    ->save(TRUE);
+
+  if (PHP_SAPI === 'cli' && function_exists('drush_main')) {
+    drush_log("Found the environment, harmonising UUID.", 'ok');
+  } else {
+    drupal_set_message(t("Found the environment, harmonising UUID to @uuid.", array('@uuid' => $uuid_service[0]['credentials']['uuid'])), 'status');
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "drupal/dta_site_uuid_harmoniser",
+  "type": "drupal-module",
+  "description": "A small module to allow the harmonisation of site UUIDs post-install.",
+  "keywords": ["Drupal"],
+  "license": "GPL-2.0+",
+  "homepage": "https://www.drupal.org/project/dta_site_uuid_harmoniser",
+  "minimum-stability": "dev",
+  "support": {
+    "issues": "https://www.drupal.org/project/issues/dta_site_uuid_harmoniser",
+    "source": "http://cgit.drupalcode.org/dta_site_uuid_harmoniser"
+  },
+  "require": { }
+}

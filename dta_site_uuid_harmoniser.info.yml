@@ -1,0 +1,5 @@
+name: DTA Site UUID Harmoniser
+type: module
+description: A small module to allow the harmonisation of site UUIDs post-install.
+core: 8.x
+package: Custom
